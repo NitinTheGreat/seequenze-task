@@ -4,23 +4,52 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { MoreHorizontal } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import type { Task } from "@/lib/types"
 
-interface TaskCardProps {
-  title: string
-  description: string
-  deadline: string
-  priority: "Low" | "High"
-  status: "To Do" | "On Progress" | "Done"
+interface TaskCardProps extends Task {
+  onUpdate: () => void
+  onDelete: () => void
 }
 
-export function TaskCard({ title, description, deadline, priority, status }: TaskCardProps) {
+export function TaskCard({ _id, title, description, deadline, priority, status, onUpdate, onDelete }: TaskCardProps) {
   const priorityColor = {
     Low: "bg-[#FFF1E6] text-[#FF9F5A]",
+    Mid: "bg-yellow-100 text-yellow-600",
     High: "bg-red-100 text-red-600",
   }
 
   const statusColor = {
     Done: "bg-green-100 text-green-600",
+  }
+
+  const handleStatusChange = async (newStatus: string) => {
+    try {
+      const response = await fetch(`/api/tasks/${_id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (response.ok) {
+        onUpdate()
+      }
+    } catch (error) {
+      console.error("Failed to update task:", error)
+    }
+  }
+
+  const handleDelete = async () => {
+    try {
+      const response = await fetch(`/api/tasks/${_id}`, {
+        method: "DELETE",
+      })
+      if (response.ok) {
+        onDelete()
+      }
+    } catch (error) {
+      console.error("Failed to delete task:", error)
+    }
   }
 
   return (
@@ -39,8 +68,13 @@ export function TaskCard({ title, description, deadline, priority, status }: Tas
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-            <DropdownMenuItem>Delete</DropdownMenuItem>
+            {status !== "Done" && (
+              <DropdownMenuItem onClick={() => handleStatusChange("Done")}>Mark as Complete</DropdownMenuItem>
+            )}
+            {status === "To Do" && (
+              <DropdownMenuItem onClick={() => handleStatusChange("On Progress")}>Move to Progress</DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={handleDelete}>Delete</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -49,7 +83,7 @@ export function TaskCard({ title, description, deadline, priority, status }: Tas
         <p className="text-gray-500 text-sm">{description}</p>
       </div>
       <div className="flex items-center text-sm text-gray-500">
-        <span>Deadline: {deadline}</span>
+        <span>Deadline: {new Date(deadline).toLocaleDateString()}</span>
       </div>
     </Card>
   )

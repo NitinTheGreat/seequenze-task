@@ -1,35 +1,25 @@
 import { NextResponse } from "next/server"
-import { MongoClient } from "mongodb"
-
-const uri = process.env.MONGODB_URI
-const client = new MongoClient(uri!)
+import { TaskModel } from "@/models/task"
 
 export async function GET() {
   try {
-    await client.connect()
-    const database = client.db("taskmanager")
-    const tasks = database.collection("tasks")
-    const result = await tasks.find({}).toArray()
-    return NextResponse.json(result)
+    console.log("inside the api hahaha")
+    const tasks = await TaskModel.findAll()
+    return NextResponse.json(tasks)
   } catch (error) {
+    console.error("Database Error:", error)
     return NextResponse.json({ error: "Failed to fetch tasks" }, { status: 500 })
-  } finally {
-    await client.close()
   }
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    await client.connect()
-    const database = client.db("taskmanager")
-    const tasks = database.collection("tasks")
-    const result = await tasks.insertOne(body)
-    return NextResponse.json(result)
+    const result = await TaskModel.create(body)
+    return NextResponse.json({ success: true, taskId: result.insertedId })
   } catch (error) {
+    console.error("Database Error:", error)
     return NextResponse.json({ error: "Failed to create task" }, { status: 500 })
-  } finally {
-    await client.close()
   }
 }
 

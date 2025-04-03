@@ -1,49 +1,49 @@
 import { NextResponse } from "next/server"
-import { MongoClient, ObjectId } from "mongodb"
-
-const uri = process.env.MONGODB_URI
-const client = new MongoClient(uri!)
+import { TaskModel } from "@/models/task"
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
-    await client.connect()
-    const database = client.db("taskmanager")
-    const tasks = database.collection("tasks")
-    const task = await tasks.findOne({ _id: new ObjectId(params.id) })
+    const task = await TaskModel.findById(params.id)
+
+    if (!task) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 })
+    }
+
     return NextResponse.json(task)
   } catch (error) {
+    console.error("Database Error:", error)
     return NextResponse.json({ error: "Failed to fetch task" }, { status: 500 })
-  } finally {
-    await client.close()
   }
 }
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
     const body = await request.json()
-    await client.connect()
-    const database = client.db("taskmanager")
-    const tasks = database.collection("tasks")
-    const result = await tasks.updateOne({ _id: new ObjectId(params.id) }, { $set: body })
-    return NextResponse.json(result)
+    const success = await TaskModel.update(params.id, body)
+
+    if (!success) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 })
+    }
+
+    return NextResponse.json({ success: true })
   } catch (error) {
+    console.error("Database Error:", error)
     return NextResponse.json({ error: "Failed to update task" }, { status: 500 })
-  } finally {
-    await client.close()
   }
 }
 
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
-    await client.connect()
-    const database = client.db("taskmanager")
-    const tasks = database.collection("tasks")
-    const result = await tasks.deleteOne({ _id: new ObjectId(params.id) })
-    return NextResponse.json(result)
+    const success = await TaskModel.delete(params.id)
+
+    if (!success) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 })
+    }
+
+    return NextResponse.json({ success: true })
   } catch (error) {
+    console.error("Database Error:", error)
     return NextResponse.json({ error: "Failed to delete task" }, { status: 500 })
-  } finally {
-    await client.close()
   }
 }
 

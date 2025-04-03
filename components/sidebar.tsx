@@ -1,44 +1,87 @@
-import { AlertCircle, Clock, Package } from "lucide-react"
+import { CheckSquare, Home, Calendar, Settings, Tag, Users, PlusCircle } from "lucide-react"
+import {
+  Sidebar as ShadcnSidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+} from "@/components/ui/sidebar"
 
 export function Sidebar() {
   return (
-    <div className="w-64 bg-white p-6 border-r">
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <AlertCircle className="h-5 w-5 text-red-600" />
-            </div>
-            <div>
-              <h3 className="text-sm font-medium">Expired Tasks</h3>
-              <p className="text-2xl font-semibold">5</p>
-            </div>
-          </div>
+    <ShadcnSidebar>
+      <SidebarHeader className="h-16 border-b border-sidebar-border">
+        <div className="flex h-full items-center px-4">
+          <h1 className="text-xl font-bold">Task Manager</h1>
         </div>
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <Package className="h-5 w-5 text-orange-600" />
-            </div>
-            <div>
-              <h3 className="text-sm font-medium">All Active Tasks</h3>
-              <p className="text-2xl font-semibold">7</p>
-            </div>
-          </div>
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Clock className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <h3 className="text-sm font-medium">Completed Tasks</h3>
-              <p className="text-2xl font-semibold">2/7</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <a href="/">
+                <Home className="h-5 w-5" />
+                <span>Dashboard</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive>
+              <a href="/tasks">
+                <CheckSquare className="h-5 w-5" />
+                <span>Tasks</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <a href="/calendar">
+                <Calendar className="h-5 w-5" />
+                <span>Calendar</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <a href="/tags">
+                <Tag className="h-5 w-5" />
+                <span>Tags</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <a href="/team">
+                <Users className="h-5 w-5" />
+                <span>Team</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <a href="/settings">
+                <Settings className="h-5 w-5" />
+                <span>Settings</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton>
+              <PlusCircle className="h-5 w-5" />
+              <span>New Task</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+      <SidebarRail />
+    </ShadcnSidebar>
   )
 }
 

@@ -1,111 +1,132 @@
 "use client"
 
-import { useState } from "react"
-import { TaskCard } from "@/components/task-card"
-import { Button } from "@/components/ui/button"
-import { AddTaskDialog } from "@/components/add-task-dialog"
-import { Plus } from "lucide-react"
-
-const initialTasks = [
-  {
-    id: "1",
-    title: "Brainstorming",
-    description: "Brainstorming brings team members' diverse experience into play.",
-    deadline: "12/5/24",
-    priority: "Low",
-    status: "To Do",
-  },
-  {
-    id: "2",
-    title: "Research",
-    description: "User research helps you to create an optimal product for users.",
-    deadline: "12/5/24",
-    priority: "High",
-    status: "To Do",
-  },
-  {
-    id: "3",
-    title: "Wireframes",
-    description: "Low fidelity wireframes include the most basic content and visuals.",
-    deadline: "12/5/24",
-    priority: "High",
-    status: "To Do",
-  },
-  {
-    id: "4",
-    title: "Onboarding Illustrations",
-    description: "",
-    deadline: "12/5/24",
-    priority: "Low",
-    status: "On Progress",
-  },
-  {
-    id: "5",
-    title: "Moodboard",
-    description: "",
-    deadline: "12/5/24",
-    priority: "Low",
-    status: "On Progress",
-  },
-  {
-    id: "6",
-    title: "Mobile App Design",
-    description: "",
-    deadline: "12/5/24",
-    priority: "Low",
-    status: "Done",
-  },
-  {
-    id: "7",
-    title: "Design System",
-    description: "It just needs to adapt the UI from what you did before",
-    deadline: "12/5/24",
-    priority: "Low",
-    status: "Done",
-  },
-] as const
+import { useState, useEffect } from "react"
+import type { Task } from "@/models/task"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Calendar, Clock, AlertCircle } from "lucide-react"
 
 export function TaskBoard() {
-  const [isAddTaskOpen, setIsAddTaskOpen] = useState(false)
-  const [tasks, setTasks] = useState(initialTasks)
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const columns = {
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const response = await fetch("/api/tasks")
+        if (!response.ok) {
+          throw new Error("Failed to fetch tasks")
+        }
+        const data = await response.json()
+        setTasks(data)
+      } catch (err) {
+        setError("Error loading tasks. Please try again.")
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTasks()
+  }, [])
+
+  const getPriorityColor = (priority?: string) => {
+    switch (priority) {
+      case "High":
+        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+      case "Medium":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+      case "Low":
+        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400"
+    }
+  }
+
+  const formatDate = (date?: Date | string) => {
+    if (!date) return ""
+    return new Date(date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    })
+  }
+
+  const tasksByStatus = {
     "To Do": tasks.filter((task) => task.status === "To Do"),
-    "On Progress": tasks.filter((task) => task.status === "On Progress"),
+    "In Progress": tasks.filter((task) => task.status === "In Progress"),
     Done: tasks.filter((task) => task.status === "Done"),
   }
 
-  return (
-    <div className="mt-8">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {Object.entries(columns).map(([status, tasks]) => (
-          <div key={status} className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  status === "To Do" ? "bg-blue-600" : status === "On Progress" ? "bg-orange-400" : "bg-green-500"
-                }`}
-              />
-              <h2 className="font-medium">
-                {status} <span className="text-gray-400 ml-1">{tasks.length}</span>
-              </h2>
-            </div>
-            <div className="space-y-4">
-              {tasks.map((task) => (
-                <TaskCard key={task.id} {...task} />
-              ))}
-            </div>
-          </div>
-        ))}
+  if (loading) {
+    return <div className="flex justify-center p-8">Loading tasks...</div>
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center p-8">
+        <div className="flex items-center text-red-500">
+          <AlertCircle className="mr-2" />
+          {error}
+        </div>
       </div>
-      <Button
-        className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-[#1D1B20] text-white hover:bg-[#1D1B20]/90"
-        onClick={() => setIsAddTaskOpen(true)}
-      >
-        <Plus className="mr-2 h-4 w-4" /> Add Task
-      </Button>
-      <AddTaskDialog open={isAddTaskOpen} onOpenChange={setIsAddTaskOpen} />
-    </div>
+    )
+  }
+
+  return (
+    <Tabs defaultValue="To Do" className="w-full">
+      <TabsList className="mb-6">
+        <TabsTrigger value="To Do">To Do ({tasksByStatus["To Do"].length})</TabsTrigger>
+        <TabsTrigger value="In Progress">In Progress ({tasksByStatus["In Progress"].length})</TabsTrigger>
+        <TabsTrigger value="Done">Done ({tasksByStatus["Done"].length})</TabsTrigger>
+      </TabsList>
+
+      {Object.entries(tasksByStatus).map(([status, statusTasks]) => (
+        <TabsContent key={status} value={status} className="mt-0">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {statusTasks.length === 0 ? (
+              <div className="col-span-full text-center py-8 text-muted-foreground">No tasks in {status}</div>
+            ) : (
+              statusTasks.map((task) => (
+                <Card key={task._id?.toString()} className="overflow-hidden">
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-lg">{task.title}</CardTitle>
+                      {task.priority && <Badge className={getPriorityColor(task.priority)}>{task.priority}</Badge>}
+                    </div>
+                    {task.description && <CardDescription className="line-clamp-2">{task.description}</CardDescription>}
+                  </CardHeader>
+                  <CardContent>
+                    {task.tags && task.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {task.tags.map((tag) => (
+                          <Badge key={tag} variant="outline" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                  <CardFooter className="flex justify-between text-xs text-muted-foreground pt-0">
+                    <div className="flex items-center">
+                      <Clock className="mr-1 h-3 w-3" />
+                      {formatDate(task.createdAt)}
+                    </div>
+                    {task.dueDate && (
+                      <div className="flex items-center">
+                        <Calendar className="mr-1 h-3 w-3" />
+                        Due: {formatDate(task.dueDate)}
+                      </div>
+                    )}
+                  </CardFooter>
+                </Card>
+              ))
+            )}
+          </div>
+        </TabsContent>
+      ))}
+    </Tabs>
   )
 }
 
